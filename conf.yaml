@@ -1,0 +1,10 @@
+- VideoDownloader:
+    carpeta_videos: local_videos  # Ruta absoluta de la carpeta de videos
+    carpeta_logs: logs
+
+
+- media_samples:
+    video_with_audio: media_samples\output_with_audio.mp4
+    video_no_audio: media_samples\output_joined.mp4
+    audio_mp3: media_samples\voz_generada.mp3
+    subtitles_srt: media_samples\subtitles.srt

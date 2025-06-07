@@ -1,0 +1,6 @@
+*.pyc
+*.log
+**/local_videos/**
+**/logs/**
+**/__pycache__/**
+**/venv/**%
