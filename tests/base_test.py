@@ -5,7 +5,7 @@ import random
 
 from resources.buscar_clips import VideoDownloader
 from resources.generar_voz import generar_voz
-from resources.media_join import video_join, video_audio_join
+from resources.media_join import non_audio_video_join as video_join, video_audio_join
 from resources.misc_utils import read_yaml_conf
 
 class BaseTest:

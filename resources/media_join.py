@@ -12,98 +12,85 @@ from resources.misc_utils import time_it
 
 logger = logging.getLogger(__name__)
 
-def _attempt_video_join(*videos, output_resolution, output_path):
-    # Crear una lista de inputs para ffmpeg
-    inputs = [ffmpeg.input(video) for video in videos]
-    
-    # Escalar todos los videos a la misma resolución
-    scaled_videos = []
-    for input_video in inputs:
-        scaled_video = input_video.video.filter('scale', output_resolution)
-        scaled_videos.append(scaled_video)
-    
-    # Normalizar el audio (misma tasa de muestreo y canales)
-    normalized_audios = []
-    for input_video in inputs:
-        normalized_audio = input_video.audio.filter('aresample', 48000).filter('asetpts', 'PTS-STARTPTS')
-        normalized_audios.append(normalized_audio)
-    
-    # Concatenar los videos escalados
-    concatenated_video = ffmpeg.concat(*scaled_videos, v=1, a=0)
-    
-    # Concatenar los audios normalizados
-    concatenated_audio = ffmpeg.concat(*normalized_audios, v=0, a=1)
-    
-    # Combinar el video y el audio concatenados
-    output = ffmpeg.output(concatenated_video, concatenated_audio, output_path)
-    
-    # Ejecutar el comando de ffmpeg
-    output.run(overwrite_output=True)
-    
-    return output_path
+def _attempt_video_join(*videos, output_resolution="1280x720", output_path="output_joined.mp4", output_fps=30):
+    try:
+        processed_video_streams = []
+        processed_audio_streams = []
+
+        for i, video_path in enumerate(videos):
+            input_stream = ffmpeg.input(video_path)
+
+            # Escalar y separar para uso único
+            video = input_stream.video.filter('fps', fps=output_fps)
+            video = video.filter('scale', *output_resolution.split('x'))
+
+            # Split para generar una rama nueva para cada uso
+            video_a = video.filter_multi_output('split')[0]
+            processed_video_streams.append(video_a)
+
+            # Manejo de audio o silencio
+            try:
+                audio = input_stream.audio
+                if audio is None:
+                    raise ValueError("Audio is None")
+            except Exception:
+                logger.warning(f"No audio found for {video_path}, using silent fallback.")
+                audio = ffmpeg.input('anullsrc', format='lavfi', channel_layout='stereo', sample_rate=44100).audio
+
+            processed_audio_streams.append(audio)
+
+        # Concatenar
+        vcat = ffmpeg.concat(*processed_video_streams, v=1, a=0)
+        acat = ffmpeg.concat(*processed_audio_streams, v=0, a=1)
+
+        output = ffmpeg.output(vcat, acat, output_path)
+        output.run(overwrite_output=True)
+
+        return output_path
+
+    except Exception as e:
+        logger.exception("Error joining videos with fallback method")
+        raise e
 
 @time_it
-def video_join(*videos, output_resolution="1280x720", output_path="output_joined.mp4", output_fps=30):
-    # Crear una lista de inputs para ffmpeg
-    try:
-        inputs = [ffmpeg.input(video) for video in videos]
-        
-        # Normalizar FPS, escalar resolución y gestionar audio
-        processed_videos = []
-        processed_audios = []
-        
-        for i, input_video in enumerate(inputs):
-            # Normalizar FPS y escalar video
-            processed_video = input_video.video.filter('fps', fps=output_fps).filter('scale', output_resolution)
-            processed_videos.append(processed_video)
-            
-            # Verificar si el video tiene audio
-            try:
-                if input_video.audio is not None:
-                    processed_audios.append(input_video.audio)
-                else:
-                    silent_audio = ffmpeg.input('anullsrc', format='lavfi', channel_layout='stereo', sample_rate=44100)
-                    processed_audios.append(silent_audio.audio)
-            except Exception as e:
-                logger.warning(f"Error processing audio for video {i}: {e}")
-                silent_audio = ffmpeg.input('anullsrc', format='lavfi', channel_layout='stereo', sample_rate=44100)
-                processed_audios.append(silent_audio.audio)
-        
-        # Concatenar videos y audios
-        concatenated_video = ffmpeg.concat(*processed_videos, v=1, a=0)
-        concatenated_audio = ffmpeg.concat(*processed_audios, v=0, a=1)
-        
-        # Combinar el video y el audio
-        output = ffmpeg.output(concatenated_video, concatenated_audio, output_path)
-        output.run()
-        
-        return output_path
-    except AssertionError as error:
-        logger.warning("Unable to join using main function. Using _attempt_video_join() instead")
-        return _attempt_video_join(*videos, output_resolution, output_path)
+def non_audio_video_join(*videos, output_resolution="1280x720", output_path="output_joined.mp4", output_fps=30):
+    inputs = [ffmpeg.input(p) for p in videos]
+
+    # Usamos filter_complex con concat n=2, v=1 (video), a=0 (no audio)
+    joined = ffmpeg.filter([inpt.video for inpt in inputs], 'concat', n=len(inputs), v=1, a=0)
+
+    # Creamos el output usando el stream concatenado
+    out = ffmpeg.output(joined, output_path)
+
+    return out.run(overwrite_output=True)
 
 @time_it
 def video_join_old(*videos, output_resolution="1280x720", output_path="output_joined.mp4"):
     # Crear una lista de inputs para ffmpeg
-    try:
-        inputs = [ffmpeg.input(video) for video in videos]
-        
-        # Escalar todos los videos a la misma resolución
-        scaled_videos = []
-        for input_video in inputs:
-            scaled_video = input_video.filter('scale', output_resolution)
-            scaled_videos.append(scaled_video)
-        
-        # Concatenar los videos escalados
-        concatenated = ffmpeg.concat(*scaled_videos, v=1, a=0)
-        
-        # Guardar el video resultante
-        concatenated.output(output_path).run()
-        
-        return output_path
-    except Exception as error:
-        logger.warning("Unable to join using main function. Using _attempt_video_join() instead")
-        return _attempt_video_join(*videos, output_resolution, output_path)
+    inputs = [ffmpeg.input(video) for video in videos]
+    
+    # Escalar todos los videos a la misma resolución y forzar SAR 1:1
+    scaled_videos = []
+    for input_video in inputs:
+        scaled_video = input_video.filter('scale', output_resolution).filter('setsar', '1/1')
+        scaled_videos.append(scaled_video)
+    
+    # Concatenar los videos escalados
+    concatenated = ffmpeg.concat(*scaled_videos, v=1, a=0)
+    
+    # Configurar parámetros de salida
+    output = concatenated.output(
+        output_path,
+        vcodec='libx264',
+        pix_fmt='yuv420p',
+        preset='fast',
+        crf=23
+    )
+    
+    # Ejecutar el comando
+    output.run(overwrite_output=True)
+    
+    return output_path
 
 @time_it
 def video_add_silent_audio_track(input_video, output_path):
