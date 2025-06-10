@@ -1,3 +1,4 @@
+import os
 import whisper  
 import sys
 import logging
@@ -6,6 +7,7 @@ import pathlib
 import cv2
 import numpy as np
 import pysrt
+import ffmpeg
 logger = logging.getLogger(__name__)
 
 def cargar_subtitulos(srt_file):
@@ -137,6 +139,20 @@ def generar_subtitulos(video_path, output_srt_path="subtitles.srt", model_size="
     logger.info(f"Subtítulos guardados en: {output_srt_path}")
     return output_srt_path
 
+def convert_srt_to_ass(srt_path, ass_output_path=None):
+    # Si no se proporciona un nombre de salida, se usa el mismo nombre con extensión .ass
+    if ass_output_path is None:
+        base, _ = os.path.splitext(srt_path)
+        ass_output_path = f"{base}.ass"
+
+    # Convertir a ruta absoluta
+    srt_path = os.path.abspath(srt_path)
+    ass_output_path = os.path.abspath(ass_output_path)
+
+    # Ejecutar ffmpeg para convertir
+    ffmpeg.input(srt_path).output(ass_output_path).run(overwrite_output=True)
+
+    return ass_output_path
 
 def format_time(seconds):
     """
@@ -154,6 +170,23 @@ def format_time(seconds):
     milliseconds = int((seconds % 1) * 1000)
     return f"{hours:02}:{minutes:02}:{seconds:02},{milliseconds:03}"
 
+def apply_style_to_ass(ass_path, margin_v=40, font_name="Arial", font_size=28, primary_color="&H00FFFFFF"):
+    with open(ass_path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    for i, line in enumerate(lines):
+        if line.startswith("Style:"):
+            parts = line.strip().split(",")
+            if len(parts) >= 12:
+                parts[1] = font_name            # Fontname
+                parts[2] = str(font_size)       # Fontsize
+                parts[3] = primary_color        # PrimaryColour
+                parts[11] = str(margin_v)       # MarginV
+                lines[i] = ",".join(parts) + "\n"
+            break
+
+    with open(ass_path, "w", encoding="utf-8") as f:
+        f.writelines(lines)
 
 
 # Ejemplo de uso

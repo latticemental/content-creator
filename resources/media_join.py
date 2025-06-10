@@ -7,6 +7,7 @@ from pydub import AudioSegment
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.audio.AudioClip import concatenate_audioclips
+from resources.subtitles import apply_style_to_ass, convert_srt_to_ass
 
 from resources.misc_utils import time_it
 
@@ -181,56 +182,50 @@ def join_audio(*media, output_file="output.mp3"):
 
 
 @time_it
-def video_join_subs(video_input_path, srt_input_path, output_video):
-    # Convertir rutas a formato absoluto
-    video_input_path = video_input_path.replace("\\", "/")
-    srt_input_path = srt_input_path.replace("\\", "/")
-    
-    logger.debug(f"video_input_path={video_input_path}")
-    logger.debug(f"srt_input_path={srt_input_path}")
+def video_join_subs(
+    video_input_path: str,
+    subtitle_path: str,
+    output_path: str,
+    margin_v: int = 40,
+    font_name: str = "Arial",
+    font_size: int = 28,
+    font_color: str = "&H00FFFFFF"
+):
+    subtitle_path = os.path.abspath(subtitle_path)
+    ext = os.path.splitext(subtitle_path)[1].lower()
 
-    # 🔹 Verificar si el archivo SRT existe
-    if not os.path.exists(srt_input_path.strip('"')):  # Quitar comillas antes de verificar
-        print(f"Error: No se encontró el archivo SRT en {srt_input_path}")
-        return None
+    if ext == ".srt":
+        logger.warning("Los archivos .srt no soportan estilos. Se convertirá a .ass para incrustar estilos.")
+        subtitle_path = convert_srt_to_ass(subtitle_path)
+        apply_style_to_ass(subtitle_path, margin_v, font_name, font_size, font_color)
+    elif ext == ".ass":
+        apply_style_to_ass(subtitle_path, margin_v, font_name, font_size, font_color)
+    else:
+        raise ValueError("El archivo de subtítulo debe ser .srt o .ass")
 
     try:
-        # 🔹 Pasar la ruta corregida en comillas dobles
-        ffmpeg_cmd = (
-            ffmpeg
-            .input(video_input_path)
-            .output(
-                output_video,
-                vf=f"subtitles={srt_input_path}",  # Comillas dobles en ruta SRT
-                vcodec="libx264",
-                acodec="aac",
-                strict="experimental"
-            )
-        )
+        ffmpeg.input(video_input_path).output(
+            output_path,
+            vf=f"subtitles='{subtitle_path}'",
+            **{"c:a": "copy"}
+        ).run(overwrite_output=True)
 
-        # Ejecutar FFmpeg y capturar salida
-        ffmpeg_cmd.run(overwrite_output=True, capture_stdout=True, capture_stderr=True)
-
-        return output_video  # Retorna la ruta del video generado
+        print(f"Subtítulos incrustados correctamente en: {output_path}")
 
     except ffmpeg.Error as e:
         print("Error al procesar el video:", e.stderr.decode())
-        return None  # Retorna None si ocurre un error
 
 @time_it
-def merge_media(*media, outputfile="myfile.mp4", volume_factor=0.0):
+def merge_media(video_input, audio_input, outputfile="myfile.mp4", volume_factor=0.0):
     """
     Combina un video con audio existente y un audio adicional.
     Mantiene el audio original del video y mezcla el audio adicional con un volumen reducido.
 
     Parámetros:
-        *media: Rutas de los archivos de entrada (video y audio adicional).
+        video_input, audio_input: Rutas de los archivos de entrada (video y audio adicional).
         outputfile: Nombre del archivo de salida.
         volume_factor: Factor de reducción de volumen para el audio adicional (por defecto 0.5).
     """
-    # Obtener los archivos de entrada
-    video_input = media[0]  # Video con audio
-    audio_input = media[1]   # Audio adicional
 
     # Cargar el video y el audio adicional
     video = ffmpeg.input(video_input)
