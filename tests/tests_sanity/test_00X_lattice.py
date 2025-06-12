@@ -1,48 +1,60 @@
 from tests.base_test import BaseTest
 from resources.generar_voz import generar_voz
-from resources.media_join import non_audio_video_join, video_audio_join, video_join_subs
-from resources.subtitles import generar_subtitulos
+from resources.media_join import non_audio_video_join, video_audio_join, video_join_subs, merge_media
 from pydub import AudioSegment
 import math
 import pathlib
 
 class TestGenerateSubs(BaseTest):
-    VIDEO_TEMPLATE_PATH = BaseTest.config["src"]["video_template"]
-    VIDEO_TEMPLATE_LEN = BaseTest.config["src"]["video_template_len"]
+    VIDEO_TEMPLATE_PATH = BaseTest.config["media_src"]["video_template"]
+    VIDEO_TEMPLATE_LEN = BaseTest.config["media_src"]["video_template_len"]
 
     def test_generate_lattice_sample_video(self):
         """Generate Lattice Sample Video"""
         script = [
-            "Bienvenido a Latis Mental, tu canal para explorar la consciencia desde todos sus ángulos.",
-            "Hoy viajaremos al corazón de una teoría fascinante y poco conocida: la Lattice de Jacobo Grinberg.",
-            "Imagina una red invisible que conecta todo: tu cerebro, tu taza de café y la galaxia más lejana.",
-            "¿Y si te dijera que, según Grinberg, esa red es la responsable de la realidad misma?",
-            "Jacobo Grinberg fue un neurofisiólogo y psicólogo mexicano, desaparecido misteriosamente en 1994.",
-            "Publicó más de 50 libros combinando neurociencia, chamanismo y física cuántica.",
-            "Su propuesta central: la existencia de una 'Lattice'—una matriz holográfica de información y energía.",
-            "1) La Lattice es un tejido de conciencia que lo abarca todo; no es espacio ni tiempo, sino la base de ellos.",
-            "2) Cada punto de la Lattice contiene la información de la totalidad, como un holograma.",
-            "3) El cerebro humano actúa como modulador: interpreta esta Lattice y la convierte en la realidad que percibimos.",
-            "4) Cuando dos observadores comparten atención, sus cerebros sincronizan patrones y co-colapsan la misma porción de Lattice.",
-            "Grinberg describe dos procesos clave:",
-            "• Sustracción: el cerebro filtra la Lattice infinita para crear un ‘mapa’ manejable—nuestro mundo cotidiano.",
-            "• Adición: mediante prácticas como la meditación o el chamanismo, podemos reducir el filtro y percibir más de la Lattice.",
-            "Esto explicaría fenómenos como telepatía, visiones o experiencias cumbre.",
-            "En la UNAM, Grinberg midió sincronías en EEG de parejas meditadoras y halló correlaciones aún separados por kilómetros.",
-            "Aunque polémicos, esos estudios apuntan a una conexión no-local—exactamente lo que la Lattice predeciría.",
-            "La comunidad científica exige replicación y marcos matemáticos sólidos.",
-            "Aún no hay consenso, pero la Lattice abre un puente entre ciencia y espiritualidad que merece explorarse.",
-            "• Mindfulness: entrenar la atención expande tu acceso a la Lattice.",
-            "• Arte y creatividad: estados de flow se interpretan como sintonía con patrones más amplios.",
-            "• Terapia: visualizar la interconexión podría fomentar empatía y sanación.",
-            "Si este viaje por la Lattice de Jacobo Grinberg te abrió nuevas preguntas, déjalas en los comentarios.",
-            "Dale like, comparte este video y suscríbete a Lattice Mental para seguir explorando la consciencia juntos.",
-            "¡Hasta la próxima expansión de la realidad!"
+            # INICIO
+            "Imaginemos un enrejado invisible que conecta todo el Universo… Eso es la ‘Lattice’. "
+            "En el capítulo 1, Grinberg la presenta como una estructura fundamental del espacio-tiempo, "
+            "hipercompleja, simétrica y coherente; una matriz energética que contiene toda la información del cosmos en cada punto.",
+
+            "No hay huecos en esta red: hasta el vacío mismo rebosa de información. La materia —ya sea una partícula o un cristal— "
+            "es simplemente una modulación local de esta estructura. Así lo describe Grinberg: cada punto de la Lattice, "
+            "incluso si no lo percibimos, contiene la totalidad del universo.",
+
+            # DESARROLLO
+            "El cerebro no es solo un receptor: es una lente que distorsiona la Lattice. Cada neurona activa cambia un poco "
+            "la estructura de esa red. El conjunto de esas alteraciones se llama campo neuronal —la base de la percepción que experimentamos.",
+
+            "Grinberg introduce el concepto clave de ‘sintergia’, fusión de síntesis y energía, definida por: coherencia, "
+            "densidad informacional y frecuencia. Presume que cuanto más alta es la sintergia, más refinada y profunda es "
+            "la interacción entre Lattice y campo neuronal.",
+
+            "Sostiene que nuestra realidad perceptual —colores, formas, sonidos— no es la realidad 'ahí afuera', sino una construcción "
+            "neuronal sobre esa matriz universal. Según él, la percepción es siempre una representación y nunca la realidad en sí.",
+
+            # CIERRE
+            "Para Grinberg, la Lattice en estado puro es conciencia pura, sin forma, sin materia, sin tiempo. "
+            "Solo cuando nuestro cerebro interviene —al distorsionarla— emergen el tiempo, los objetos y la percepción.",
+
+            "El capítulo sugiere que un cerebro altamente coherente, de alta sintergia, podría resonar con la Lattice en su estado original, "
+            "induciendo un estado de Unidad, donde el ego desaparece y la conciencia se fusiona con el todo.",
+
+            "Lo que no está del todo claro en este capítulo es cómo se mide o cuantifica la sintergia de forma práctica, "
+            "y qué tipo de entrenamiento mental —si existe— facilita esa resonancia profunda. Grinberg insinúa que culturas ancestrales "
+            "y técnicas chamánicas podrían explorar esos estados, pero en este primer capítulo no detalla los métodos ni evidencia empírica concreta.",
+
+            # RESUMEN FINAL
+            "Lattice: matriz universal, precursora del espacio-tiempo y la materia.",
+            "Campo neuronal: distorsión de la Lattice creada por el cerebro, base de la percepción.",
+            "Sintergia: índice de coherencia, densidad y frecuencia informacional que determina la calidad de interpretación.",
+            "Percepción como construcción: nuestra experiencia del mundo emerge de la interacción entre el cerebro y la Lattice.",
+            "Estado de Unidad: meta última, disolución del ego y fusión con el campo universal."
         ]
         self.logger.info("1. Creating audio script...")
         audio_path = generar_voz("".join(script),
                                  voz="es-MX-JorgeNeural",
-                                 output_file="salida.mp3")
+                                 output_file="salida.mp3",
+                                 output_subs="subtitles.srt")
         self.logger.info(f"Archivo MP3 generado en: {audio_path}")
         assert self.file_exists(audio_path), "Expecting MP3 to exist!"
 
@@ -50,6 +62,7 @@ class TestGenerateSubs(BaseTest):
         audio_len = len(AudioSegment.from_file(audio_path))//1000
         self.logger.info(f"Audio lenght in seconds: {audio_len}")
 
+        self.logger.info(f"3. Creating video loop to fit audio len ({audio_len} seconds)...")
         video_template_repetition = math.ceil(audio_len/self.VIDEO_TEMPLATE_LEN)
         self.logger.info(f"Will join #{video_template_repetition} video_templates to fit {audio_len}")
 
@@ -57,14 +70,21 @@ class TestGenerateSubs(BaseTest):
         video_list = [self.VIDEO_TEMPLATE_PATH]*video_template_repetition
         non_audio_video_join(*video_list, output_path="output_joined.mp4")
 
+        self.logger.info("4. Joining video + audio track...")
         assert self.file_exists("output_joined.mp4"), "Video with no audio shall exist"
         output_video_path = video_audio_join(*["output_joined.mp4", audio_path])
         assert self.file_exists(output_video_path)
-
-        output_subs_path = generar_subtitulos(output_video_path, "subs.srt")
-        assert self.file_exists(output_subs_path), "SRT subtitles shall exist!"
-
+        
+        self.logger.info("5. Joining video (with audio track) + subs")
         output_video_subs_path = video_join_subs(video_input_path=output_video_path,
-                                                 srt_input_path=output_subs_path,
-                                                 output_video="video_with_subs.mp4")
+                                                 subtitle_path="subtitles.srt",
+                                                 output_path="video_with_subs.mp4")
         assert self.file_exists(output_video_subs_path), "Video + SRT shall exist!"
+
+        self.logger.info("6. Joining video (with audio track) + music audio track (low volume)")
+        output_video_with_music = merge_media(video_input=output_video_subs_path,
+                                              audio_input=self.config["media_src"]["music_track"],
+                                              volume_factor=0.2,
+                                              outputfile="final_video_with_music.mp4")
+
+        assert self.file_exists(output_video_with_music), "Final Video with Music shall exist!"

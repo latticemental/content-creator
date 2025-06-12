@@ -186,10 +186,10 @@ def video_join_subs(
     video_input_path: str,
     subtitle_path: str,
     output_path: str,
-    margin_v: int = 40,
-    font_name: str = "Arial",
+    margin_v: int = 100,
+    font_name: str = "Open Sans",
     font_size: int = 28,
-    font_color: str = "&H00FFFFFF"
+    font_color: str = "&H0032c2f1"
 ):
     subtitle_path = os.path.abspath(subtitle_path)
     ext = os.path.splitext(subtitle_path)[1].lower()
@@ -211,6 +211,7 @@ def video_join_subs(
         ).run(overwrite_output=True)
 
         print(f"Subtítulos incrustados correctamente en: {output_path}")
+        return output_path
 
     except ffmpeg.Error as e:
         print("Error al procesar el video:", e.stderr.decode())
@@ -263,6 +264,8 @@ def merge_media(video_input, audio_input, outputfile="myfile.mp4", volume_factor
 
     # Ejecutar el comando de ffmpeg
     ffmpeg.run(output)
+
+    return os.path.abspath(outputfile)
 
 
 

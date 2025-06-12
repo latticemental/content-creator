@@ -2,10 +2,12 @@
     carpeta_videos: local_videos  # Ruta absoluta de la carpeta de videos
     carpeta_logs: logs
 
-- src:
-    video_template: src/video_template.mp4
+- media_src:
+    video_template: media_src/video_templates/video_template.mp4
     video_template_len: 14 #seconds
-    video_with_audio: src/output_with_audio.mp4
-    video_no_audio: src/output_joined.mp4
-    audio_mp3: src/voz_generada.mp3
-    subtitles_srt: src/subtitles.srt
+    video_with_audio: media_src/output_with_audio.mp4
+    video_for_music: media_src/video_for_music.mp4
+    music_track: media_src/music_track/scary-horror-music.mp3
+    video_no_audio: media_src/output_joined.mp4
+    audio_mp3: media_src/voz_generada.mp3
+    subtitles_srt: media_src/subtitles.srt

@@ -24,7 +24,7 @@ class BaseTest:
         """after test"""
 
     @classmethod
-    def clean_up_workspace(cls, directory=os.getcwd(), extensions=[".mp3", ".mp4", ".srt"]):
+    def clean_up_workspace(cls, directory=os.getcwd(), extensions=[".mp3", ".mp4", ".srt", ".ass"]):
         """Remove any found file with extension specified"""
         # Recorre todos los archivos en el directorio
         for archivo in os.listdir(directory):

@@ -12,6 +12,27 @@ class BaseContentScriptAIGenerator:
         """
         pass
 
+    def _get_audiobook_prompt(self, author: str, chapter: int, duration: int) -> list:
+        """
+        Retrieve OpenAI prompt for audiobook
+
+        Params:
+            author: str, book author
+            chapter: int, book chapter to analyze
+            duration: int, expected duration in seconds
+        """
+        prompt = (
+            f"Eres un narrador claro y cautivador. Resume el capítulo {chapter} del libro 'Lattice' de {author} "
+            f"en forma de guion narrativo. El resumen debe incluir los conceptos clave, ideas centrales y tono espiritual o científico "
+            f"según lo presenta el autor. Divide el guion en partes (inicio, desarrollo, cierre) y escribe en un lenguaje accesible para una audiencia general, "
+            f"manteniendo el estilo reflexivo característico de {author}. El texto debe estar pensado para ser narrado en voz alta en aproximadamente "
+            f"{duration} segundos. No inventes información, y si algo no está claro en el capítulo, menciónalo."
+        )
+        return [
+            {"role": "system", "content": "Eres un escritor profesional de guiones narrativos."},
+            {"role": "user", "content": prompt}
+        ]
+
     def generate_longform_script(self, TBD: str) -> str:
         """
         Generate Longform video script
