@@ -15,6 +15,7 @@ class BaseContentCreator:
     """
     BaseContentCreator
     """
+    DEFAULT_SUBTITLES_FILENAME = "subtitles.srt"
 
     def __init__(self, output_resolution):
         """
@@ -56,26 +57,28 @@ class BaseContentCreator:
                                 outputfile=output_path.absolute(),
                                 volume_factor=volume_factor))
 
-    def _create_audio_track(self, txt: str, voice: EdgeTTS_Voices):
+    def _create_audio_track(self, txt: str, voice: EdgeTTS_Voices, output_subs: str):
         """
         Crea una pista de audio usando Edge TTS
         """
         self.logger.info(f"Creating audio track - voice={voice.name}: {txt}")
         return generar_voz(txt, voz=voice.value)
     
-    def create_audio_track_mx_female(self, txt: str) -> Path:
+    def create_audio_track_mx_female(self, txt: str, output_subs: str = DEFAULT_SUBTITLES_FILENAME) -> Path:
         """
         Crea una pista de audio usando la voz de Mujer -> Dalia
         """
         return Path(self._create_audio_track(txt,
-                                             EdgeTTS_Voices.DALIA))
+                                             EdgeTTS_Voices.DALIA,
+                                             output_subs))
     
-    def create_audio_track_mx_male(self, txt: str) -> Path:
+    def create_audio_track_mx_male(self, txt: str, output_subs: str = DEFAULT_SUBTITLES_FILENAME) -> Path:
         """
         Crea una pista de audio usando la voz de Hombre -> Jorge
         """
         return Path(self._create_audio_track(txt,
-                                             EdgeTTS_Voices.JORGE))
+                                             EdgeTTS_Voices.JORGE,
+                                             output_subs))
 
     def create_subs_from_video(self, video_with_audio: Path, output_subs_path: Path) -> Path:
         """
