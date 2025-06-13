@@ -4,8 +4,13 @@ import edge_tts
 import subprocess
 from pydub import AudioSegment
 import logging
+from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+class EdgeTTS_Voices(Enum):
+    DALIA = "es-MX-DaliaNeural"
+    JORGE = "es-MX-JorgeNeural"
 
 
 async def generar_audio(texto, voz="es-MX-DaliaNeural", output_file="voz_generada.mp3", expected_duration_ms=None, output_subs=None):

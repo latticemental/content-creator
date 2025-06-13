@@ -1,0 +1,26 @@
+- LatticeMental_YouTube_Pipeline1:
+    platform: youtube
+    video_type: longform
+    content_type: 
+        - id: audiobook_chapters
+        - author: Jacobo Grinberg
+        - book: Teoria Sintergica
+        - chapters: 1, 2, 3, 4, 5, 6
+    video_duration: 5 # minutes
+    subtitles: True
+    voice: jorge # dalia, jorge
+    video_template_src: media_src/video_templates/lattice_mental_1.mp4
+    posting_rate: 2 # every X days
+
+- LatticeMental_Youtube_Pipeline2:
+    platform: youtube
+    video_type: longform
+    content_type:
+        - id: audiobook
+        - author: Jacobo Grinberg
+        - book: Teoria Sintergica
+    video_duration: 5 # minutes
+    subtitles: True
+    voice: jorge # dalia, jorge
+    video_template_src: media_src/video_templates/lattice_mental_2.mp4
+    posting_rate: 2 # every X days
