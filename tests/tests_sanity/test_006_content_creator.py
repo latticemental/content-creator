@@ -10,9 +10,9 @@ class TestContentCreatorClass(BaseTest):
         longform_video = ContentMediaGenerator_LongFormVideo(output_path="longform_video.mp4")
         output_video = longform_video.create_complete_audiobook(book="Teoria Sintergica",
                                                                 author="Jacobo Grinberg",
-                                                                video_loop=Path("media_src/template.mp4"),
+                                                                video_loop=Path("media_src/video_templates/video_template.mp4"),
                                                                 video_loop_len=14, # arg to be removed on future versions (video len will be calc automatically)
                                                                 duration=5*60,
-                                                                music_track=Path("media_src/music_track.mp3"))
+                                                                music_track=Path("media_src/music_track/scary-horror-music.mp3"))
 
         assert self.file_exists(output_video), "Video shall exist!"

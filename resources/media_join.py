@@ -63,7 +63,9 @@ def non_audio_video_join(*videos, output_resolution="1280x720", output_path="out
     # Creamos el output usando el stream concatenado
     out = ffmpeg.output(joined, output_path)
 
-    return out.run(overwrite_output=True)
+    out.run(overwrite_output=True)
+
+    return output_path
 
 @time_it
 def video_join_old(*videos, output_resolution="1280x720", output_path="output_joined.mp4"):

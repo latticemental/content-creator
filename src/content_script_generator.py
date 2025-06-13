@@ -21,7 +21,7 @@ class ContentScriptGenerator(ABC):
     """
 
     HEADER = "Eres un escritor profesional de guiones narrativos."
-    FOOTER = ("Importante: No incluyas ninguna introducción ni explicación fuera del guion ni indicadores como Inicio, desarrollo, cierre o pausas. "
+    FOOTER = ("Importante: No incluyas ninguna introducción ni explicación fuera del guion ni indicadores como Inicio, desarrollo, cierre, pausas o cualquier sugerencia de edición entre parentesis. "
               "Devuelve únicamente el texto del guion que será leído por Text-to-Speech, sin comentarios previos ni posteriores. "
               "Si hay elementos poco claros en el capítulo, menciónalos dentro del guion mismo como reflexión del narrador, no como aclaración externa.")
 
@@ -105,14 +105,14 @@ class ContentScriptGenerator_GeminiAI(ContentScriptGenerator):
         """
         headers = {"Content-Type": "application/json"}
 
-        data = {"contents": [{"parts": [{"text":f"{prompt}"}]}]}
+        data = {"contents": [{"parts": [{"text":f"{self.HEADER} {prompt} {self.FOOTER}"}]}]}
         response = requests.post(self.API_URL,
                                  headers=headers, data=json.dumps(data))
 
         if response.status_code == 200:
             result = response.json()
             self.logger.info(json.dumps(result, indent=2))
-            return result["candidates"][0]["content"]["parts"][0]["text"].replace("**", "").replace("\n", "")
+            return result["candidates"][0]["content"]["parts"][0]["text"].replace("**", "").replace("\n", "").replace("##", "")
         else:
             self.logger.error(f"Error {response.status_code}: {response.text}")
 

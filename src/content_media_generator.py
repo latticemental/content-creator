@@ -40,13 +40,17 @@ class ContentMediaGenerator_LongFormVideo:
         """
         # 1. Generate script base & tts track
         script = self.script_generator.get_audiobook_complete(book, author, duration)
-        self.media_toolkit.create_audio_track_mx_male(script)
+        tts_track = f"{book}_{author}_narration.mp3"
+        subs_path = f"{book}_{author}_narration.srt"
+        self.media_toolkit.create_audio_track_mx_male(script,
+                                                      output_audio=tts_track,
+                                                      output_subs=subs_path)
 
         content_len = self.media_toolkit.get_content_lenght()
         video_loop_list = [video_loop] * math.ceil(content_len/video_loop_len)
 
         # 2. Assemble video_loop from template
-        self.media_toolkit.join_non_audio_videos(*video_loop_list)
+        self.media_toolkit.join_non_audio_videos(*video_loop_list, output_path="non_audio_video.mp4")
 
         # 3. Join non_audio_video + tts track
         self.media_toolkit.join_tts_audio_to_video()

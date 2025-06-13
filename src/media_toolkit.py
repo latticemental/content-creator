@@ -84,7 +84,7 @@ class MediaToolkit:
                                              output_audio,
                                              output_subs))
     
-    def create_audio_track_mx_male(self, txt: str, output_audio, output_subs: str = DEFAULT_SUBTITLES_FILENAME) -> Path:
+    def create_audio_track_mx_male(self, txt: str, output_audio: str, output_subs: str = DEFAULT_SUBTITLES_FILENAME) -> Path:
         """
         Crea una pista de audio usando la voz de Hombre -> Jorge
         """
@@ -99,12 +99,12 @@ class MediaToolkit:
         """
         if not self._workflow_status <= MediaToolkit_Status.NON_AUDIO_VIDEO.value:
             raise MediaToolkit_WorkflowError("Workflow status shall be less or equals to NON_AUDIO_VIDEO. "
-                                             "If video already has audio, no other can be joined."
+                                             "If video already has audio, no other can be joined. "
                                              f"WORKFLOW_STATUS = {self._workflow_status}")
 
-        self.video_path = Path(non_audio_video_join(*non_audio_videos,
+        self.video_path = non_audio_video_join(*non_audio_videos,
                                                     output_resolution=self.output_resolution,
-                                                    output_path=output_path.absolute()))
+                                                    output_path=output_path)
         self.logger.info("Joined Non Audio videos, a new output video has been created! - "
                          f"output_path={output_path}.")
         self._set_workflow_status(MediaToolkit_Status.NON_AUDIO_VIDEO)
@@ -119,9 +119,9 @@ class MediaToolkit:
             raise MediaToolkit_WorkflowError("Workflow status shall be equals to NON_AUDIO_VIDEO. "
                                              f"WORKFLOW_STATUS = {self._workflow_status}")
         output_video = "tts_audio_video.mp4"
-        self.video_path = Path(video_audio_join(*[self.video_path, self.tts_track],
-                                                output_resolution=self.output_resolution,
-                                                output_path=output_video))
+        self.video_path = video_audio_join(self.video_path, self.tts_track,
+                                           output_resolution=self.output_resolution,
+                                           output_path=output_video)
 
         self.logger.info("Joined TTS Audio to Non Audio video, a new output video has been created! - "
                          f"output_path={self.video_path}.")
