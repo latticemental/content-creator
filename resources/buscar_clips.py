@@ -4,40 +4,44 @@ import os
 import yaml
 from datetime import datetime
 import time
+from pathlib import Path
 import logging
 
+
 class VideoDownloader:
+
     def __init__(self, debug=False):
-        # Ruta del archivo de configuración
-        self.CONFIG_FILE = "conf.yaml"
-
-        # Cargar configuración desde el archivo YAML
-        self.config = self._cargar_configuracion()
-
-        # Configuración de la API de Pexels
-        self.PEXELS_API_KEY = "DUNrGJqWjM9I8wB96TUuptinnPijrINcyTcg98SxXUr30LNow5X1Mbmh"  # Reemplaza con tu API Key
-
-        # Obtener la carpeta principal de videos desde la configuración
-        self.CARPETA_PRINCIPAL = self.config.get("VideoDownloader", {}).get("carpeta_videos", "local_videos")
-
-        # Obtener la carpeta de logs desde la configuración
-        self.CARPETA_LOGS = self.config.get("VideoDownloader", {}).get("carpeta_logs", "logs")
-
-        # Crear la carpeta de logs si no existe
-        if not os.path.exists(self.CARPETA_LOGS):
-            os.makedirs(self.CARPETA_LOGS)
 
         # Configurar logging
         self.debug = debug
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
 
+        # Ruta del archivo de configuración
+        self.config_file = Path(__file__).parents[1].resolve() / "conf.yaml"
+
+        # Cargar configuración desde el archivo YAML
+        self.config = self._cargar_configuracion()
+
+        # Configuración de la API de Pexels
+        self.pexel_token = "DUNrGJqWjM9I8wB96TUuptinnPijrINcyTcg98SxXUr30LNow5X1Mbmh"  # Reemplaza con tu API Key
+
+        # Obtener la carpeta principal de videos desde la configuración
+        self.CARPETA_PRINCIPAL = self.config.get("VideoDownloader", {}).get("carpeta_videos", "local_videos")
+
+        # Obtener la carpeta de logs desde la configuración
+        self.download_folder = self.config.get("VideoDownloader", {}).get("carpeta_logs", "logs")
+
+        # Crear la carpeta de logs si no existe
+        if not os.path.exists(self.download_folder):
+            os.makedirs(self.download_folder)
+
         # Crear un formateador para los mensajes de log
         formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
         # Crear un manejador para guardar los logs en un archivo
         log_filename = f"{datetime.now().strftime('%Y%m%d')}_VideoDownloader.log"
-        log_ruta_completa = os.path.join(self.CARPETA_LOGS, log_filename)  # Ruta completa del archivo de log
+        log_ruta_completa = os.path.join(self.download_folder, log_filename)  # Ruta completa del archivo de log
         file_handler = logging.FileHandler(log_ruta_completa)
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.DEBUG)
@@ -62,11 +66,11 @@ class VideoDownloader:
 
     def _cargar_configuracion(self):
         """Carga la configuración desde el archivo conf.yaml."""
-        if not os.path.exists(self.CONFIG_FILE):
-            self.logger.warning(f"⚠️ El archivo de configuración '{self.CONFIG_FILE}' no existe. Usando valores por defecto.")
+        if not self.config_file.exists():
+            self.logger.warning(f"⚠️ El archivo de configuración '{self.config_file}' no existe. Usando valores por defecto.")
             return {}
 
-        with open(self.CONFIG_FILE, "r") as f:
+        with open(str(self.config_file), "r") as f:
             try:
                 config = yaml.safe_load(f)
                 if not config:
@@ -81,7 +85,7 @@ class VideoDownloader:
                 return config_dict
 
             except yaml.YAMLError as e:
-                self.logger.error(f"❌ Error al leer el archivo de configuración: {e}")
+                self.logger.error(f"Error al leer el archivo de configuración: {e}")
                 return {}
 
     def query(self, name, count):
@@ -111,7 +115,7 @@ class VideoDownloader:
                 # Buscar videos en la página actual
                 videos = self._buscar_videos(pagina=pagina_actual)
                 if not videos:
-                    self.logger.warning(f"⚠️ No se encontraron más videos en la página {pagina_actual}.")
+                    self.logger.warning(f"No se encontraron más videos en la página {pagina_actual}.")
                     intentos_fallidos += 1
                     pagina_actual += 1
                     continue  # Pasar a la siguiente página
@@ -132,7 +136,7 @@ class VideoDownloader:
                         if os.path.exists(ruta_video):
                             rutas_videos.append(os.path.abspath(ruta_video))
                             videos_descargados += 1
-                            self.logger.debug(f"✅ Video reutilizado: {ruta_video}")
+                            self.logger.debug(f"Video reutilizado: {ruta_video}")
                             continue  # Saltar este video
 
                     # Si el video no existe, descargarlo y procesarlo
@@ -149,14 +153,14 @@ class VideoDownloader:
                 time.sleep(1)
 
             except requests.exceptions.RequestException as e:
-                self.logger.error(f"❌ Error en la solicitud a la API: {e}")
+                self.logger.error(f"Error en la solicitud a la API: {e}")
                 intentos_fallidos += 1
                 time.sleep(5)  # Esperar 5 segundos antes de reintentar
 
         # Calcular y mostrar el tiempo total tomado
         end_time = time.time()
         tiempo_total = end_time - start_time
-        self.logger.info(f"⏱️ Tiempo total para completar la función: {tiempo_total:.2f} segundos")
+        self.logger.info(f"Tiempo total para completar la función: {tiempo_total:.2f} segundos")
 
         # Devolver la lista de rutas de videos descargados
         return rutas_videos
@@ -166,13 +170,13 @@ class VideoDownloader:
         ruta_carpeta = os.path.join(self.CARPETA_PRINCIPAL, query)
         if not os.path.exists(ruta_carpeta):
             os.makedirs(ruta_carpeta)
-            self.logger.debug(f"📁 Carpeta creada: {ruta_carpeta}")
+            self.logger.debug(f"Carpeta creada: {ruta_carpeta}")
         return ruta_carpeta
 
     def _buscar_videos(self, pagina=1):
         """Busca videos en Pexels basados en la query y la página especificada."""
         url = f"https://api.pexels.com/videos/search?query={self.QUERY}&per_page={self.NUM_VIDEOS}&page={pagina}"
-        headers = {"Authorization": self.PEXELS_API_KEY}
+        headers = {"Authorization": self.pexel_token}
         response = requests.get(url, headers=headers)
         
         if response.status_code == 200:
@@ -188,7 +192,7 @@ class VideoDownloader:
         
         # Verificar si el video ya existe en la carpeta
         if os.path.exists(ruta_completa):
-            self.logger.debug(f"✅ El video '{nombre_archivo}' ya existe en la carpeta '{ruta_carpeta}'. No se descargará nuevamente.")
+            self.logger.debug(f"El video '{nombre_archivo}' ya existe en la carpeta '{ruta_carpeta}'. No se descargará nuevamente.")
             return os.path.abspath(ruta_completa)  # Devuelve la ruta absoluta del video existente
         
         # Descargar el video si no existe
@@ -197,10 +201,10 @@ class VideoDownloader:
             with open(ruta_completa, "wb") as f:
                 for chunk in response.iter_content(1024):
                     f.write(chunk)
-            self.logger.info(f"✅ Video guardado: {ruta_completa}")
+            self.logger.info(f" Video guardado: {ruta_completa}")
             return os.path.abspath(ruta_completa)  # Devuelve la ruta absoluta del video descargado
         else:
-            self.logger.error(f"❌ Error al descargar: {url}")
+            self.logger.error(f"Error al descargar: {url}")
             return None  # Indica que hubo un error
 
     def _generar_nombre_archivo(self, video_id, query, video_url):
@@ -229,7 +233,7 @@ class VideoDownloader:
         # Guardar los metadatos actualizados en YAML
         with open(self.METADATA_FILE, "w") as f:
             yaml.dump(metadatos, f, default_flow_style=False)
-        self.logger.info(f"✅ Metadatos actualizados en: {self.METADATA_FILE}")
+        self.logger.info(f"Metadatos actualizados en: {self.METADATA_FILE}")
 
     def _procesar_video(self, video):
         """Procesa un video: descarga, verifica duplicados y guarda metadatos."""
@@ -255,10 +259,10 @@ class VideoDownloader:
         
         return None  # Si no se descargó el video, devuelve None
 
-# Ejemplo de uso
+
 if __name__ == "__main__":
     video_downloader = VideoDownloader(debug=True)
     queries = ["space", "stars", "food", "healthy", "safety"]
     for query in queries:
         rutas_videos = video_downloader.query(name=query, count=5)
-        print(f"📂 Videos relacionados con '{query}': {rutas_videos}")
+        print(f"Videos relacionados con '{query}': {rutas_videos}")
